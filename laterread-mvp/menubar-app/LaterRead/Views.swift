@@ -734,6 +734,23 @@ struct RelatedArticlesView: View {
         self._selectedUrls = State(initialValue: Set(item.relatedArticles))
     }
 
+    // 智能排序：同分类的文章排在前面
+    var sortedItems: [ReadingItem] {
+        allItems.sorted { a, b in
+            let aScore = (a.category == item.category) ? 1 : 0
+            let bScore = (b.category == item.category) ? 1 : 0
+            if aScore != bScore {
+                return aScore > bScore
+            }
+            return a.createdAt > b.createdAt
+        }
+    }
+
+    // 判断文章是否为推荐关联
+    func isRecommended(_ relatedItem: ReadingItem) -> Bool {
+        return relatedItem.category == item.category
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
@@ -755,16 +772,27 @@ struct RelatedArticlesView: View {
                 Text(item.title)
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(2)
-                Text(item.domain)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 4) {
+                    Text("\(item.emoji) \(item.domain)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
 
             // Related articles selection
             VStack(alignment: .leading, spacing: 8) {
-                Text("Select related articles (optional)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                HStack {
+                    Text("Select related articles (optional)")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Spacer()
+                    if selectedUrls.count > 0 {
+                        Text("\(selectedUrls.count) selected")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                }
 
                 if allItems.isEmpty {
                     Text("No read articles available")
@@ -773,8 +801,8 @@ struct RelatedArticlesView: View {
                         .padding(.vertical, 8)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(allItems) { relatedItem in
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(sortedItems) { relatedItem in
                                 Toggle(isOn: Binding(
                                     get: { selectedUrls.contains(relatedItem.url) },
                                     set: { isSelected in
@@ -785,20 +813,50 @@ struct RelatedArticlesView: View {
                                         }
                                     }
                                 )) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(relatedItem.title)
-                                            .font(.system(size: 12))
-                                            .lineLimit(2)
-                                        Text("\(relatedItem.emoji) \(relatedItem.domain)")
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.secondary)
+                                    HStack(alignment: .top, spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            HStack(spacing: 6) {
+                                                Text(relatedItem.title)
+                                                    .font(.system(size: 12))
+                                                    .lineLimit(3)
+                                                    .fixedSize(horizontal: false, vertical: true)
+
+                                                if isRecommended(relatedItem) {
+                                                    Text("推荐")
+                                                        .font(.system(size: 9, weight: .medium))
+                                                        .foregroundColor(.white)
+                                                        .padding(.horizontal, 4)
+                                                        .padding(.vertical, 2)
+                                                        .background(Color.blue)
+                                                        .cornerRadius(3)
+                                                }
+                                            }
+
+                                            Text("\(relatedItem.emoji) \(relatedItem.domain)")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.secondary)
+
+                                            if !relatedItem.summary.isEmpty {
+                                                Text(relatedItem.summary)
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(.secondary.opacity(0.8))
+                                                    .lineLimit(2)
+                                            }
+                                        }
+                                        Spacer()
                                     }
                                 }
                                 .toggleStyle(.checkbox)
+                                .padding(.vertical, 4)
+
+                                if relatedItem.id != sortedItems.last?.id {
+                                    Divider()
+                                }
                             }
                         }
+                        .padding(.horizontal, 4)
                     }
-                    .frame(height: 200)
+                    .frame(height: 280)
                 }
             }
 
@@ -817,12 +875,12 @@ struct RelatedArticlesView: View {
                 .buttonStyle(.borderedProminent)
             }
 
-            Text("This will mark the article as read and move it to the LaterWrite section")
+            Text("This will mark as read and move to ✍️ LaterWrite section")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
         .padding(16)
-        .frame(width: 400, height: 440)
+        .frame(width: 480, height: 540)
     }
 }
 
