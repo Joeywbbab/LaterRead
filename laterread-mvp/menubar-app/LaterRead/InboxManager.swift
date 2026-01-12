@@ -53,14 +53,11 @@ class InboxManager {
     }
 
     func moveToLaterWrite(_ item: ReadingItem, relatedArticles: [String] = []) throws {
-        var items = loadItems()
-        if let index = items.firstIndex(where: { $0.url == item.url }) {
-            items[index].category = "laterwrite"
-            items[index].isRead = true
-            items[index].relatedArticles = relatedArticles
-            let content = generateMarkdown(items)
-            try content.write(to: Config.inboxPath, atomically: true, encoding: .utf8)
-        }
+        // 1. 从 inbox 中删除
+        try deleteItem(item)
+
+        // 2. 添加到 LaterWrite（会自动设为未读状态）
+        try LaterWriteManager.shared.addItem(item, relatedArticles: relatedArticles)
     }
 
     func updateRelatedArticles(url: String, relatedArticles: [String]) throws {

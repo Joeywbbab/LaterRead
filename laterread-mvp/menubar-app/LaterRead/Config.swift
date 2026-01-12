@@ -5,11 +5,13 @@ struct Config {
     // Obsidian vault 配置
     static let vaultName = "Joeyyyyuwww"
     static let inboxRelativePath = "【00】LaterRead/inbox.md"
+    static let laterWriteRelativePath = "【00】LaterRead/LaterWrite.md"
 
     // Obsidian vault 路径
     static let obsidianVault = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Library/Mobile Documents/iCloud~md~obsidian/Documents/\(vaultName)")
     static let inboxPath = obsidianVault.appendingPathComponent(inboxRelativePath)
+    static let laterWritePath = obsidianVault.appendingPathComponent(laterWriteRelativePath)
 
     // OpenRouter API
     static let keychainService = "com.laterread.api"
