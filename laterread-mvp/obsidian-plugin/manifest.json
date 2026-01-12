@@ -1,0 +1,10 @@
+{
+  "id": "laterread",
+  "name": "LaterRead",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "稍后阅读管理系统 - 保存链接、自动分类、生成周末阅读清单",
+  "author": "Joey",
+  "authorUrl": "https://github.com/joey",
+  "isDesktopOnly": true
+}

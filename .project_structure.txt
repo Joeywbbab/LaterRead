@@ -1,0 +1,29 @@
+LaterRead/
+├── README.md                      # 项目主入口（精简版）
+├── docs/                          # 文档中心
+│   ├── USAGE.md                  # 使用指南
+│   ├── TROUBLESHOOTING.md        # 故障排除
+│   ├── ARCHITECTURE.md           # 架构设计
+│   └── DEVELOPMENT.md            # 开发指南
+│
+└── laterread-mvp/                 # 源代码
+    ├── README.md                  # 安装说明（精简版）
+    ├── install.sh                 # 一键安装脚本
+    │
+    ├── obsidian-plugin/           # Obsidian 插件
+    │   ├── main.ts
+    │   ├── manifest.json
+    │   └── package.json
+    │
+    └── menubar-app/               # macOS 菜单栏 App
+        ├── Package.swift
+        └── LaterRead/             # 源码模块（9个文件）
+            ├── Config.swift
+            ├── Models.swift
+            ├── CategoryManager.swift
+            ├── KeychainManager.swift
+            ├── AIService.swift
+            ├── BrowserHelper.swift
+            ├── InboxManager.swift
+            ├── LaterReadApp.swift
+            └── Views.swift

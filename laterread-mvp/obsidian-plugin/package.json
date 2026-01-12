@@ -1,0 +1,16 @@
+{
+  "name": "laterread",
+  "version": "1.0.0",
+  "description": "LaterRead Obsidian Plugin",
+  "main": "main.js",
+  "scripts": {
+    "dev": "esbuild main.ts --bundle --external:obsidian --outfile=main.js --format=cjs --watch",
+    "build": "esbuild main.ts --bundle --external:obsidian --outfile=main.js --format=cjs --minify"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.20.0",
+    "obsidian": "^1.4.0",
+    "typescript": "^5.0.0"
+  }
+}
