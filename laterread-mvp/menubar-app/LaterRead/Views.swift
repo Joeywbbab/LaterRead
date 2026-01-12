@@ -108,7 +108,7 @@ struct MenuBarView: View {
 
             // Footer
             HStack {
-                Button("Open in Obsidian") {
+                Button("Inbox") {
                     if let url = Config.obsidianURL(for: Config.inboxRelativePath) {
                         NSWorkspace.shared.open(url)
                     }
@@ -116,6 +116,15 @@ struct MenuBarView: View {
                 .buttonStyle(.plain)
                 .font(.caption)
                 .foregroundColor(.accentColor)
+
+                Button("✍️ LaterWrite") {
+                    if let url = Config.obsidianURL(for: Config.laterWriteRelativePath) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundColor(.purple)
 
                 Spacer()
 
@@ -168,7 +177,7 @@ struct MenuBarView: View {
             if let item = relatedDialogItem {
                 RelatedArticlesView(
                     item: item,
-                    allItems: items.filter { $0.url != item.url && $0.isRead },
+                    allItems: getAllArticlesForRelation(excluding: item.url),
                     onSave: { relatedUrls in
                         moveItemToLaterWrite(item: item, relatedArticles: relatedUrls)
                         showingRelatedDialog = false
@@ -188,6 +197,20 @@ struct MenuBarView: View {
 
         // 每次加载数据后检查未读数量提醒
         checkUnreadCountAndNotify(unreadCount: unreadCount)
+    }
+
+    // 获取所有可关联的文章（inbox + LaterWrite）
+    private func getAllArticlesForRelation(excluding currentUrl: String) -> [ReadingItem] {
+        var allArticles: [ReadingItem] = []
+
+        // 添加 inbox 中已读的文章
+        allArticles.append(contentsOf: items.filter { $0.url != currentUrl && $0.isRead })
+
+        // 添加 LaterWrite 中的所有文章
+        let laterWriteItems = LaterWriteManager.shared.loadItems()
+        allArticles.append(contentsOf: laterWriteItems.filter { $0.url != currentUrl })
+
+        return allArticles
     }
 
     // 检查未读数量阈值并发送提醒

@@ -32,6 +32,7 @@ class LaterWriteManager {
         }
 
         // 建立双向关联：如果新文章关联了其他文章，也要在那些文章中添加反向关联
+        // 1. 先处理 LaterWrite 内部的关联
         for relatedUrl in relatedArticles {
             if let index = items.firstIndex(where: { $0.url == relatedUrl }) {
                 if !items[index].relatedArticles.contains(newItem.url) {
@@ -40,9 +41,36 @@ class LaterWriteManager {
             }
         }
 
+        // 保存 LaterWrite 文件
         let content = generateMarkdown(items)
         try content.write(to: Config.laterWritePath, atomically: true, encoding: .utf8)
+
+        // 2. 处理 inbox 中的反向关联
+        try addBacklinksToInbox(newItemUrl: newItem.url, relatedArticles: relatedArticles)
+
         print("[LaterWrite] Added item: \(newItem.title)")
+    }
+
+    // 在 inbox 中添加反向关联
+    private func addBacklinksToInbox(newItemUrl: String, relatedArticles: [String]) throws {
+        var inboxItems = InboxManager.shared.loadItems()
+        var modified = false
+
+        for relatedUrl in relatedArticles {
+            if let index = inboxItems.firstIndex(where: { $0.url == relatedUrl }) {
+                if !inboxItems[index].relatedArticles.contains(newItemUrl) {
+                    inboxItems[index].relatedArticles.append(newItemUrl)
+                    modified = true
+                }
+            }
+        }
+
+        if modified {
+            // 需要访问 InboxManager 的 generateMarkdown，所以使用 updateRelatedArticles
+            for inboxItem in inboxItems where relatedArticles.contains(inboxItem.url) {
+                try InboxManager.shared.updateRelatedArticles(url: inboxItem.url, relatedArticles: inboxItem.relatedArticles)
+            }
+        }
     }
 
     // 切换已读状态
