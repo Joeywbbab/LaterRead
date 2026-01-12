@@ -147,17 +147,30 @@ class LaterWriteManager {
                 currentLineOffset += 1
             }
 
-            // 检查关联文章
-            let relatedPrefix = "> 🔗 "
+            // 检查关联文章 ("> 🔗 Related: " 前缀)
+            let relatedPrefix = "> 🔗 Related: "
             if index + currentLineOffset < lines.count && lines[index + currentLineOffset].hasPrefix(relatedPrefix) {
                 let relatedStr = String(lines[index + currentLineOffset].dropFirst(relatedPrefix.count))
-                item.relatedArticles = relatedStr.components(separatedBy: ", ").filter { !$0.isEmpty }
+                // 从 markdown 链接格式 [title](url) 中提取 URL
+                item.relatedArticles = extractURLsFromMarkdownLinks(relatedStr)
             }
 
             items.append(item)
         }
 
         return items
+    }
+
+    // 从 markdown 链接格式提取 URL: "[title](url) | [title](url)" -> ["url1", "url2"]
+    private func extractURLsFromMarkdownLinks(_ text: String) -> [String] {
+        let pattern = #"\[.+?\]\((.+?)\)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let range = NSRange(text.startIndex..., in: text)
+        let matches = regex.matches(in: text, range: range)
+        return matches.compactMap { match -> String? in
+            guard let urlRange = Range(match.range(at: 1), in: text) else { return nil }
+            return String(text[urlRange])
+        }
     }
 
     // 生成 Markdown

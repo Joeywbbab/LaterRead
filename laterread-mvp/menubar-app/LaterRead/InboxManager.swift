@@ -4,12 +4,28 @@ import Foundation
 class InboxManager {
     static let shared = InboxManager()
 
+    private init() {}
+
     func loadItems() -> [ReadingItem] {
-        guard FileManager.default.fileExists(atPath: Config.inboxPath.path),
-              let content = try? String(contentsOf: Config.inboxPath, encoding: .utf8) else {
+        guard let content = try? String(contentsOf: Config.inboxPath, encoding: .utf8) else {
+            print("[Inbox] File not found, creating new one")
+            createEmptyFile()
             return []
         }
         return parseMarkdown(content)
+    }
+
+    // 创建空的 inbox 文件
+    private func createEmptyFile() {
+        let content = """
+        # 📖 LaterRead Inbox
+
+        Press ⌘⇧L to save current browser page
+
+        """
+        let dir = Config.inboxPath.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? content.write(to: Config.inboxPath, atomically: true, encoding: .utf8)
     }
 
     func appendItem(_ item: ReadingItem) throws {
@@ -40,6 +56,15 @@ class InboxManager {
         if let index = items.firstIndex(where: { $0.url == url }) {
             items[index].category = category
             items[index].summary = summary
+            let content = generateMarkdown(items)
+            try content.write(to: Config.inboxPath, atomically: true, encoding: .utf8)
+        }
+    }
+
+    func updateNote(url: String, note: String) throws {
+        var items = loadItems()
+        if let index = items.firstIndex(where: { $0.url == url }) {
+            items[index].note = note
             let content = generateMarkdown(items)
             try content.write(to: Config.inboxPath, atomically: true, encoding: .utf8)
         }
@@ -118,17 +143,30 @@ class InboxManager {
                 currentLineOffset += 1
             }
 
-            // 检查是否有关联文章 ("> 🔗 " 前缀)
-            let relatedPrefix = "> 🔗 "
+            // 检查是否有关联文章 ("> 🔗 Related: " 前缀)
+            let relatedPrefix = "> 🔗 Related: "
             if index + currentLineOffset < lines.count && lines[index + currentLineOffset].hasPrefix(relatedPrefix) {
                 let relatedStr = String(lines[index + currentLineOffset].dropFirst(relatedPrefix.count))
-                item.relatedArticles = relatedStr.components(separatedBy: ", ").filter { !$0.isEmpty }
+                // 从 markdown 链接格式 [title](url) 中提取 URL
+                item.relatedArticles = extractURLsFromMarkdownLinks(relatedStr)
             }
 
             items.append(item)
         }
 
         return items
+    }
+
+    // 从 markdown 链接格式提取 URL: "[title](url) | [title](url)" -> ["url1", "url2"]
+    private func extractURLsFromMarkdownLinks(_ text: String) -> [String] {
+        let pattern = #"\[.+?\]\((.+?)\)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let range = NSRange(text.startIndex..., in: text)
+        let matches = regex.matches(in: text, range: range)
+        return matches.compactMap { match -> String? in
+            guard let urlRange = Range(match.range(at: 1), in: text) else { return nil }
+            return String(text[urlRange])
+        }
     }
 
     private func generateMarkdown(_ items: [ReadingItem]) -> String {

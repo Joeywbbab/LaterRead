@@ -6,7 +6,9 @@ class KeychainManager {
     static let shared = KeychainManager()
 
     func saveAPIKey(_ key: String) -> Bool {
-        let data = key.data(using: .utf8)!
+        guard let data = key.data(using: .utf8) else {
+            return false
+        }
 
         // 先删除旧的
         let deleteQuery: [String: Any] = [

@@ -1,6 +1,5 @@
 import SwiftUI
 import AppKit
-import UserNotifications
 
 // ============== Menu Bar View ==============
 struct MenuBarView: View {
@@ -205,7 +204,7 @@ struct MenuBarView: View {
         // 只在恰好达到新阈值且未读数量增加时提醒
         if thresholds.contains(unreadCount) && unreadCount > currentThreshold {
             let message = getUnreadReminderMessage(count: unreadCount)
-            showLocalNotification(title: "📚 阅读提醒", body: message)
+            NotificationHelper.shared.send(title: "📚 阅读提醒", body: message)
             print("[MenuBar] ✅ Unread reminder triggered: \(unreadCount) items")
             setLastNotifiedThreshold(unreadCount)
         } else if unreadCount < currentThreshold {
@@ -243,13 +242,7 @@ struct MenuBarView: View {
     }
 
     private func updateItemNote(item: ReadingItem, note: String) {
-        // InboxManager 需要一个更新备注的方法
-        var updatedItem = item
-        updatedItem.note = note
-
-        // 先删除旧的，再添加新的（简单实现）
-        try? InboxManager.shared.deleteItem(item)
-        try? InboxManager.shared.appendItem(updatedItem)
+        try? InboxManager.shared.updateNote(url: item.url, note: note)
         loadItems()
     }
 
@@ -257,15 +250,15 @@ struct MenuBarView: View {
         do {
             try InboxManager.shared.moveToLaterWrite(item, relatedArticles: relatedArticles)
             loadItems()
-            showLocalNotification(title: "Moved to LaterWrite ✓", body: "✍️ \(item.title)")
+            NotificationHelper.shared.send(title: "Moved to LaterWrite ✓", body: "✍️ \(item.title)")
         } catch {
-            showLocalNotification(title: "Move failed", body: error.localizedDescription)
+            NotificationHelper.shared.send(title: "Move failed", body: error.localizedDescription)
         }
     }
 
     private func classifyItem(_ item: ReadingItem) {
         guard let apiKey = KeychainManager.shared.getAPIKey(), !apiKey.isEmpty else {
-            showLocalNotification(title: "分类失败", body: "未设置 API Key")
+            NotificationHelper.shared.send(title: "分类失败", body: "未设置 API Key")
             return
         }
 
@@ -294,7 +287,7 @@ struct MenuBarView: View {
                     try? InboxManager.shared.updateItem(url: itemUrl, category: classification.category, summary: classification.summary)
                     loadItems()
                 case .failure(let error):
-                    showLocalNotification(title: "分类失败", body: error.localizedDescription)
+                    NotificationHelper.shared.send(title: "分类失败", body: error.localizedDescription)
                 }
             }
         }
@@ -302,7 +295,7 @@ struct MenuBarView: View {
 
     private func classifyAllItems() {
         guard let apiKey = KeychainManager.shared.getAPIKey(), !apiKey.isEmpty else {
-            showLocalNotification(title: "分类跳过", body: "未设置 API Key，请先在设置中配置")
+            NotificationHelper.shared.send(title: "分类跳过", body: "未设置 API Key，请先在设置中配置")
             return
         }
 
@@ -311,13 +304,13 @@ struct MenuBarView: View {
             !$0.isRead && ($0.summary.isEmpty || $0.category.isEmpty || $0.category == "general")
         }
         guard !needsClassification.isEmpty else {
-            showLocalNotification(title: "无需分类", body: "所有未读条目都已分类完成")
+            NotificationHelper.shared.send(title: "无需分类", body: "所有未读条目都已分类完成")
             return
         }
 
         isClassifying = true
         let total = needsClassification.count
-        showLocalNotification(title: "开始分类", body: "正在处理 \(total) 个条目...")
+        NotificationHelper.shared.send(title: "开始分类", body: "正在处理 \(total) 个条目...")
 
         Task {
             var classified = 0
@@ -350,7 +343,7 @@ struct MenuBarView: View {
 
                         // 每处理 3 个条目显示进度
                         if (index + 1) % 3 == 0 || (index + 1) == total {
-                            showLocalNotification(title: "分类进度", body: "已完成 \(index + 1)/\(total)")
+                            NotificationHelper.shared.send(title: "分类进度", body: "已完成 \(index + 1)/\(total)")
                         }
                     case .failure(let error):
                         failed += 1
@@ -368,33 +361,12 @@ struct MenuBarView: View {
                 isClassifying = false
                 if classified > 0 {
                     let message = "成功 \(classified) 个" + (failed > 0 ? "，失败 \(failed) 个" : "")
-                    showLocalNotification(title: "分类完成 ✓", body: message)
+                    NotificationHelper.shared.send(title: "分类完成 ✓", body: message)
                 } else {
-                    showLocalNotification(title: "分类失败", body: lastError ?? "所有请求均失败")
+                    NotificationHelper.shared.send(title: "分类失败", body: lastError ?? "所有请求均失败")
                 }
             }
         }
-    }
-
-    private func showLocalNotification(title: String, body: String) {
-        // 如果不在 bundle 中运行（开发模式），只打印日志
-        guard Bundle.main.bundleIdentifier != nil else {
-            print("[Notification] \(title): \(body)")
-            return
-        }
-
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
-
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 }
 

@@ -90,7 +90,7 @@ class AIService {
             ]
         ]
 
-        guard let url = URL(string: Config.apiEndpoint),
+        guard let apiURL = URL(string: Config.apiEndpoint),
               let bodyData = try? JSONSerialization.data(withJSONObject: requestBody) else {
             print("[AI] Error: Failed to create request")
             return .failure(.invalidResponse)
@@ -99,7 +99,7 @@ class AIService {
         print("[AI] Request URL: \(Config.apiEndpoint)")
         print("[AI] Request model: \(Config.aiModel)")
 
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")

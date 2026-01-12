@@ -16,7 +16,7 @@ struct Config {
     // OpenRouter API
     static let keychainService = "com.laterread.api"
     static let keychainAccount = "openrouter-api-key"
-    static let aiModel = "google/gemini-3-flash-preview"  // Gemini 3 Flash Preview（官方文档确认）
+    static let aiModel = "google/gemini-2.0-flash-001"  // Gemini 2.0 Flash 稳定版
     static let apiEndpoint = "https://openrouter.ai/api/v1/chat/completions"
 
     // 生成 Obsidian URL
