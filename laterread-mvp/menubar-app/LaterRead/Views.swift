@@ -828,7 +828,7 @@ struct RelatedArticlesView: View {
                         .padding(.vertical, 8)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 4) {
                             ForEach(sortedItems) { relatedItem in
                                 Toggle(isOn: Binding(
                                     get: { selectedUrls.contains(relatedItem.url) },
@@ -840,50 +840,42 @@ struct RelatedArticlesView: View {
                                         }
                                     }
                                 )) {
-                                    HStack(alignment: .top, spacing: 8) {
-                                        VStack(alignment: .leading, spacing: 3) {
-                                            HStack(spacing: 6) {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            HStack(spacing: 4) {
                                                 Text(relatedItem.title)
-                                                    .font(.system(size: 12))
-                                                    .lineLimit(3)
-                                                    .fixedSize(horizontal: false, vertical: true)
+                                                    .font(.system(size: 11))
+                                                    .lineLimit(2)
 
                                                 if isRecommended(relatedItem) {
                                                     Text("推荐")
-                                                        .font(.system(size: 9, weight: .medium))
+                                                        .font(.system(size: 8, weight: .medium))
                                                         .foregroundColor(.white)
-                                                        .padding(.horizontal, 4)
-                                                        .padding(.vertical, 2)
+                                                        .padding(.horizontal, 3)
+                                                        .padding(.vertical, 1)
                                                         .background(Color.blue)
-                                                        .cornerRadius(3)
+                                                        .cornerRadius(2)
                                                 }
                                             }
 
                                             Text("\(relatedItem.emoji) \(relatedItem.domain)")
-                                                .font(.system(size: 10))
+                                                .font(.system(size: 9))
                                                 .foregroundColor(.secondary)
-
-                                            if !relatedItem.summary.isEmpty {
-                                                Text(relatedItem.summary)
-                                                    .font(.system(size: 10))
-                                                    .foregroundColor(.secondary.opacity(0.8))
-                                                    .lineLimit(2)
-                                            }
                                         }
                                         Spacer()
                                     }
                                 }
                                 .toggleStyle(.checkbox)
-                                .padding(.vertical, 4)
+                                .padding(.vertical, 3)
 
                                 if relatedItem.id != sortedItems.last?.id {
                                     Divider()
                                 }
                             }
                         }
-                        .padding(.horizontal, 4)
+                        .padding(.horizontal, 2)
                     }
-                    .frame(height: 280)
+                    .frame(height: 200)
                 }
             }
 
@@ -907,7 +899,7 @@ struct RelatedArticlesView: View {
                 .foregroundColor(.secondary)
         }
         .padding(16)
-        .frame(width: 480, height: 540)
+        .frame(width: 400, height: 420)
     }
 }
 
