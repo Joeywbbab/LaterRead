@@ -107,80 +107,33 @@ struct MenuBarView: View {
             Divider()
 
             // Footer
-            VStack(spacing: 0) {
-                // Quick access buttons
-                HStack(spacing: 6) {
-                    Button(action: {
-                        if let url = Config.obsidianURL(for: Config.inboxRelativePath) {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "doc.text")
-                                .font(.system(size: 11))
-                            Text("Inbox")
-                                .font(.system(size: 11))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.accentColor.opacity(0.1))
-                        .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: {
-                        if let url = Config.obsidianURL(for: Config.laterWriteRelativePath) {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 11))
-                            Text("LaterWrite")
-                                .font(.system(size: 11))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(Color.purple.opacity(0.1))
-                        .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
+            HStack {
+                Button("Classify All") {
+                    classifyAllItems()
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundColor(.orange)
+                .disabled(isClassifying)
 
-                Divider()
+                Spacer()
 
-                // Control buttons
-                HStack {
-                    Button("Classify All") {
-                        classifyAllItems()
-                    }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                    .disabled(isClassifying)
-
-                    Spacer()
-
-                    Button("Settings") {
-                        showSettings = true
-                    }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                    Button("Quit") {
-                        NSApplication.shared.terminate(nil)
-                    }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Button("Settings") {
+                    showSettings = true
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
         .frame(width: 360)
         .onAppear { loadItems() }
