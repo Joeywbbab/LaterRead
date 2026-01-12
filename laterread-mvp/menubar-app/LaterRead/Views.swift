@@ -70,7 +70,7 @@ struct MenuBarView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(visibleItems) { item in
-                            ItemRow(item: item, isHovered: hoveredId == item.id) {
+                            ItemRow(item: item, isHovered: hoveredId == item.id, allItems: items) {
                                 try? InboxManager.shared.toggleRead(item)
                                 loadItems()
                             }
@@ -397,6 +397,7 @@ struct MenuBarView: View {
 struct ItemRow: View {
     let item: ReadingItem
     let isHovered: Bool
+    let allItems: [ReadingItem]  // 用于查找关联文章的标题
     let onToggleRead: () -> Void
 
     var body: some View {
@@ -444,12 +445,33 @@ struct ItemRow: View {
                 }
 
                 if !item.relatedArticles.isEmpty {
-                    HStack(spacing: 4) {
-                        Text("🔗")
-                            .font(.caption)
-                        Text("\(item.relatedArticles.count) related article(s)")
-                            .font(.caption)
-                            .foregroundColor(.purple)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 4) {
+                            Text("🔗")
+                                .font(.caption)
+                            Text("Related (\(item.relatedArticles.count)):")
+                                .font(.caption)
+                                .foregroundColor(.purple)
+                        }
+
+                        // 创建 URL 到文章的映射
+                        let urlToItem = Dictionary(uniqueKeysWithValues: allItems.map { ($0.url, $0) })
+
+                        // 显示关联文章的标题
+                        ForEach(item.relatedArticles.prefix(3), id: \.self) { url in
+                            if let relatedItem = urlToItem[url] {
+                                Text("  • \(relatedItem.title)")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.purple.opacity(0.8))
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        if item.relatedArticles.count > 3 {
+                            Text("  • +\(item.relatedArticles.count - 3) more...")
+                                .font(.system(size: 10))
+                                .foregroundColor(.purple.opacity(0.6))
+                        }
                     }
                 }
             }

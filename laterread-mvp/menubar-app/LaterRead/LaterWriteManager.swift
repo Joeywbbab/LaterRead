@@ -31,6 +31,15 @@ class LaterWriteManager {
             items.append(newItem)
         }
 
+        // 建立双向关联：如果新文章关联了其他文章，也要在那些文章中添加反向关联
+        for relatedUrl in relatedArticles {
+            if let index = items.firstIndex(where: { $0.url == relatedUrl }) {
+                if !items[index].relatedArticles.contains(newItem.url) {
+                    items[index].relatedArticles.append(newItem.url)
+                }
+            }
+        }
+
         let content = generateMarkdown(items)
         try content.write(to: Config.laterWritePath, atomically: true, encoding: .utf8)
         print("[LaterWrite] Added item: \(newItem.title)")
@@ -132,6 +141,9 @@ class LaterWriteManager {
         // 按日期分组
         let sortedItems = items.sorted { $0.createdAt > $1.createdAt }
 
+        // 创建 URL 到文章的映射，方便查找标题
+        let urlToItem = Dictionary(uniqueKeysWithValues: items.map { ($0.url, $0) })
+
         for item in sortedItems {
             let checkbox = item.isRead ? "x" : " "
             md += "- [\(checkbox)] \(item.emoji) [\(item.title)](\(item.url)) | \(item.domain) | \(item.createdAt)\n"
@@ -143,7 +155,16 @@ class LaterWriteManager {
                 md += "> 📝 \(item.note)\n"
             }
             if !item.relatedArticles.isEmpty {
-                md += "> 🔗 Related: \(item.relatedArticles.joined(separator: ", "))\n"
+                // 生成关联文章的链接，格式为 [标题](URL)
+                let relatedLinks = item.relatedArticles.compactMap { url -> String? in
+                    if let relatedItem = urlToItem[url] {
+                        return "[\(relatedItem.title)](\(url))"
+                    }
+                    return nil
+                }
+                if !relatedLinks.isEmpty {
+                    md += "> 🔗 Related: \(relatedLinks.joined(separator: " | "))\n"
+                }
             }
             md += "\n"
         }

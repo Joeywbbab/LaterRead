@@ -140,6 +140,14 @@ class InboxManager {
             grouped[item.category, default: []].append(item)
         }
 
+        // 创建 URL 到文章的映射（包括 inbox 和 laterwrite）
+        var urlToItem = Dictionary(uniqueKeysWithValues: items.map { ($0.url, $0) })
+        // 也加载 LaterWrite 中的文章，以便显示跨文件的关联
+        let laterWriteItems = LaterWriteManager.shared.loadItems()
+        for lwItem in laterWriteItems {
+            urlToItem[lwItem.url] = lwItem
+        }
+
         // 使用 CategoryManager 的顺序
         for cat in CategoryManager.categoryOrder {
             guard let catItems = grouped[cat], !catItems.isEmpty else { continue }
@@ -158,7 +166,16 @@ class InboxManager {
                     md += "> 📝 \(item.note)\n"
                 }
                 if !item.relatedArticles.isEmpty {
-                    md += "> 🔗 \(item.relatedArticles.joined(separator: ", "))\n"
+                    // 生成关联文章的链接，格式为 [标题](URL)
+                    let relatedLinks = item.relatedArticles.compactMap { url -> String? in
+                        if let relatedItem = urlToItem[url] {
+                            return "[\(relatedItem.title)](\(url))"
+                        }
+                        return nil
+                    }
+                    if !relatedLinks.isEmpty {
+                        md += "> 🔗 Related: \(relatedLinks.joined(separator: " | "))\n"
+                    }
                 }
                 md += "\n"
             }
